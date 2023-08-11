@@ -1,0 +1,6 @@
+{
+  "name": ["Name", "First", "Last", "Full_name", "f.name"],
+  "salary": ["wage", "salary", "pay", "Rate"],
+  "email": ["Email", "E-mail", "e_mail"],
+  "id": ["ID", "emp id","Number"]
+}

@@ -1,0 +1,3 @@
+email,name,number,wage,errors
+max@test.com,Max Topperson,3,,Salary is required
+x@x.com,Alfred Donald,4,record on line 5: wrong number of fields
