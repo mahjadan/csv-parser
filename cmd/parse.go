@@ -4,17 +4,13 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"employee-csv-parser/pkg/config"
 	"employee-csv-parser/pkg/parser"
-	"employee-csv-parser/pkg/utils"
-	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"os"
 )
 
-// var cfg config.ColumnNames
-var cfg map[string][]string
+var columnConfig map[string][]string
 
 const configPath = "config/config.json"
 
@@ -29,38 +25,24 @@ rcsv parse source/roster1.csv.`,
 	Args:    cobra.ExactArgs(1),
 
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		configFile, err := os.Open(configPath)
-		if err != nil {
-			return errors.Wrapf(err, "opening config file")
-		}
-		defer configFile.Close()
+		loader := config.NewConfigLoader(configPath)
 
-		decoder := json.NewDecoder(configFile)
-		err = decoder.Decode(&cfg)
+		cfg, err := loader.LoadConfig()
 		if err != nil {
-
-			return errors.Wrapf(err, "error decoding config file [%v]", configPath)
+			return err
 		}
+
+		columnConfig = cfg
 		// todo remove log
-		fmt.Printf("%+v\n", cfg)
-		//normalizeConfig(&cfg)
-		normalizeConfigMap(cfg)
+		fmt.Printf("PreRunE config %+v\n", columnConfig)
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		csvFile := args[0]
-		fmt.Println("Config:", cfg)
-
-		err := parser.Parse(cfg, csvFile)
-
+		fmt.Println("Run Config:", columnConfig)
+		err := parser.Parse(columnConfig, csvFile)
 		return err
 	},
-}
-
-func normalizeConfigMap(cfg map[string][]string) {
-	for k, v := range cfg {
-		cfg[k] = utils.ToLowerTrimSlice(v)
-	}
 }
 
 func init() {
