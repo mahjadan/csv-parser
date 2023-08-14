@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var columnConfig map[string][]string
+var columnAliasConfig map[string][]string
 
 const configPath = "config/config.json"
 
@@ -26,22 +26,17 @@ rcsv parse source/roster1.csv.`,
 
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		loader := config.NewConfigLoader(configPath)
-
 		cfg, err := loader.LoadConfig()
 		if err != nil {
 			return err
 		}
-
-		columnConfig = cfg
-		// todo remove log
-		fmt.Printf("PreRunE config %+v\n", columnConfig)
+		columnAliasConfig = cfg
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		csvFile := args[0]
-		fmt.Println("Run Config:", columnConfig)
-		err := parser.Parse(columnConfig, csvFile)
-		return err
+		fmt.Println("Run Config:", columnAliasConfig)
+		return parser.Parse(columnAliasConfig, csvFile)
 	},
 }
 
