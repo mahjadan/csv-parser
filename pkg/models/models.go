@@ -1,6 +1,7 @@
 package models
 
 import (
+	"employee-csv-parser/pkg/csvmapper"
 	"github.com/pkg/errors"
 	"regexp"
 	"strings"
@@ -40,4 +41,13 @@ func (e Employee) IsValid() error {
 		return errors.New(strings.Join(validationErrors, "| "))
 	}
 	return nil
+}
+
+func NewEmployee(record []string, columnIdentifier csvmapper.ColumnIdentifier) Employee {
+	return Employee{
+		ID:     record[columnIdentifier.IndexForColumn("id")],
+		Email:  record[columnIdentifier.IndexForColumn("email")],
+		Name:   record[columnIdentifier.IndexForColumn("name")],
+		Salary: record[columnIdentifier.IndexForColumn("salary")],
+	}
 }

@@ -1,7 +1,8 @@
 package parser
 
 import (
-	"employee-csv-parser/pkg/models"
+	"employee-csv-parser/pkg/csvmapper"
+	"employee-csv-parser/pkg/processor"
 	"employee-csv-parser/pkg/utils"
 	"encoding/csv"
 	"fmt"
@@ -11,9 +12,7 @@ import (
 	"time"
 )
 
-var standardOutputColumns = []string{"id", "name", "email", "salary"}
-
-func Parse(cfg map[string][]string, csfFilePath string) error {
+func Parse(columnAliases map[string][]string, csfFilePath string) error {
 	csvFile, err := os.Open(csfFilePath)
 	if err != nil {
 		return errors.Wrap(err, "error opening CSV file")
@@ -28,104 +27,61 @@ func Parse(cfg map[string][]string, csfFilePath string) error {
 	}
 	headers = utils.ToLowerTrimSlice(headers)
 
-	columnIndices := NewColumnIndices(cfg, standardOutputColumns)
-	err = columnIndices.MapIndices(headers)
+	columnIdentifier := csvmapper.NewColumnIdentifier(columnAliases, headers)
+	err = columnIdentifier.MapColumnToIndexes(headers)
 	if err != nil {
 		return err
 	}
-	validFileName := generateFileName("valid")
-	invalidFileName := generateFileName("invalid")
 
-	validFile, err := os.Create(validFileName)
+	// create writers
+	validFile, err := createCSVFile("valid")
 	if err != nil {
-		return errors.Wrap(err, "error creating valid CSV file")
+		return err
 	}
 	defer validFile.Close()
 
-	invalidFile, err := os.Create(invalidFileName)
+	invalidFile, err := createCSVFile("invalid")
 	if err != nil {
-		return errors.Wrap(err, "error creating invalid CSV file")
+		return err
 	}
 	defer invalidFile.Close()
 
-	// create writers
 	validWriter := csv.NewWriter(validFile)
 	invalidWriter := csv.NewWriter(invalidFile)
+	// move flush inside the processor
 	defer validWriter.Flush()
 	defer invalidWriter.Flush()
-
+	// todo why the name CSVProcessor ? its specific to csv ?
+	csvProcessor := processor.NewCSVProcessor(validWriter, invalidWriter, columnIdentifier)
 	// Write headers to the valid CSV file
-	validWriter.Write(standardOutputColumns)
-	invalidHeaders := append(headers, "errors")
-	invalidWriter.Write(invalidHeaders)
+	err = csvProcessor.InitializeHeaders()
+	if err != nil {
+		return errors.Wrap(err, "error writing headers")
+	}
 
-	var employee models.Employee
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			// handle wrong number of fields
-			record = append(record, err.Error())
-			invalidWriter.Write(record)
+			csvProcessor.WriteInvalidRecord(record, err.Error())
 			continue
 		}
-
-		employee = models.Employee{}
-
-		// Map columns based on headers and columnMappings
-		employee.ID = record[columnIndices.GetIndex("id")]
-		employee.Email = record[columnIndices.GetIndex("email")]
-		employee.Name = record[columnIndices.GetIndex("name")]
-		employee.Salary = record[columnIndices.GetIndex("salary")]
-		err = employee.IsValid()
-		if err != nil {
-			fmt.Printf("INVALID: Processed Employee: %+v, error: %v \n", employee, err)
-			invalidWriter.Write(append(record, err.Error()))
-		} else {
-			fmt.Printf("Processed Employee: %+v\n", employee)
-			validWriter.Write([]string{employee.ID, employee.Name, employee.Email, employee.Salary})
-		}
+		csvProcessor.ProcessValidRecord(record)
 	}
 	return nil
 }
+
+func createCSVFile(fileNamePrefix string) (*os.File, error) {
+	fileName := generateFileName(fileNamePrefix)
+	file, err := os.Create(fileName)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error creating %s CSV file", fileNamePrefix)
+	}
+	return file, nil
+}
+
 func generateFileName(prefix string) string {
 	timestamp := time.Now().Format("20060102150405")
 	return fmt.Sprintf("%s_%s.csv", prefix, timestamp)
-}
-
-type ColumnIndices struct {
-	indices        map[string]int
-	columnMappings map[string][]string
-	columnNames    []string
-}
-
-func (c *ColumnIndices) GetIndex(columnName string) int {
-	return c.indices[columnName]
-}
-func NewColumnIndices(cfg map[string][]string, columnNames []string) ColumnIndices {
-	indices := make(map[string]int)
-	for columnName := range cfg {
-		indices[columnName] = -1
-	}
-	return ColumnIndices{indices: indices, columnMappings: cfg, columnNames: columnNames}
-}
-func (c *ColumnIndices) MapIndices(csvHeaders []string) error {
-	for index, header := range csvHeaders {
-		for columnName, alternativeNames := range c.columnMappings {
-			if utils.SliceContains(alternativeNames, header) {
-				c.indices[columnName] = index
-			}
-		}
-	}
-	return c.hasMissingColumn()
-}
-
-func (c *ColumnIndices) hasMissingColumn() error {
-	for columnName, index := range c.indices {
-		if index == -1 {
-			return errors.Errorf("missing column/header: '%s'. Tried alternatives: %v", columnName, c.columnMappings[columnName])
-		}
-	}
-	return nil
 }
