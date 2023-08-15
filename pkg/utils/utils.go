@@ -1,8 +1,6 @@
 package utils
 
-import (
-	"strings"
-)
+import "strings"
 
 const ByteOrderMark = string('\uFEFF')
 
@@ -23,4 +21,10 @@ func SliceContains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+func NormalizeMapKeys(configMap map[string][]string) {
+	for k, v := range configMap {
+		configMap[k] = ToLowerTrimSlice(v)
+	}
 }
