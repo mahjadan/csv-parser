@@ -7,6 +7,46 @@ import (
 	"testing"
 )
 
+func TestNewConfigLoader(t *testing.T) {
+	testCases := []struct {
+		name           string
+		configPath     string
+		validColumns   []string
+		invalidColumns []string
+		expected       *Loader
+	}{
+		{
+			name:           "WithValidColumns",
+			configPath:     "/path/to/config.json",
+			validColumns:   []string{"name", "email"},
+			invalidColumns: []string{"salary", "id"},
+			expected: &Loader{
+				configPath:         "/path/to/config.json",
+				ValidColumnNames:   []string{"name", "email"},
+				InvalidColumnNames: []string{"salary", "id"},
+			},
+		},
+		{
+			name:           "WithoutColumns",
+			configPath:     "/path/to/config.json",
+			validColumns:   nil,
+			invalidColumns: nil,
+			expected: &Loader{
+				configPath:         "/path/to/config.json",
+				ValidColumnNames:   nil,
+				InvalidColumnNames: nil,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			configLoader := NewConfigLoader(tc.configPath, tc.validColumns, tc.invalidColumns)
+			assert.Equal(t, tc.expected, configLoader)
+		})
+	}
+}
+
 func TestLoadConfig(t *testing.T) {
 	t.Run("ExistingConfigFile", func(t *testing.T) {
 
@@ -22,12 +62,6 @@ func TestLoadConfig(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error creating temp file: %v\n", err)
 		}
-		defer func() {
-			err := os.Remove(tempFile.Name())
-			if err != nil {
-				t.Fatal(err)
-			}
-		}()
 		defer tempFile.Close()
 
 		_, err = tempFile.Write(tempConfig)
@@ -36,28 +70,29 @@ func TestLoadConfig(t *testing.T) {
 		}
 
 		configPath := tempFile.Name()
-		configLoader := NewConfigLoader(configPath)
-		config, err := configLoader.LoadConfig()
+		configLoader := NewConfigLoader(configPath, nil, nil)
+		err = configLoader.LoadConfig()
 
 		assert.NoError(t, err)
-		assert.NotNil(t, config)
-		assert.Equal(t, 3, len(config["name"]))
-		assert.Equal(t, 3, len(config["salary"]))
-		assert.Equal(t, 2, len(config["email"]))
-		assert.Equal(t, 2, len(config["id"]))
+		assert.NotNil(t, configLoader.ColumnAliasConfig)
+		assert.Equal(t, 3, len(configLoader.ColumnAliasConfig["name"]))
+		assert.Equal(t, 3, len(configLoader.ColumnAliasConfig["salary"]))
+		assert.Equal(t, 2, len(configLoader.ColumnAliasConfig["email"]))
+		assert.Equal(t, 2, len(configLoader.ColumnAliasConfig["id"]))
 	})
 	t.Run("NonExistentConfigFile", func(t *testing.T) {
 		configPath := "/path/to/nonexistent/config.json"
-		configLoader := NewConfigLoader(configPath)
-		configMap, err := configLoader.LoadConfig()
+		configLoader := NewConfigLoader(configPath, nil, nil)
+		err := configLoader.LoadConfig()
 
 		assert.Error(t, err)
-		assert.Nil(t, configMap)
+		assert.Nil(t, configLoader.ColumnAliasConfig)
 		assert.Contains(t, err.Error(), "opening config file")
 	})
 	t.Run("InvalidJSONConfig", func(t *testing.T) {
 		tempConfig := []byte(`{
-		invalid JSON content
+		"name": inavlid,
+		"id": "ID"
 	}`)
 
 		dir := t.TempDir()
@@ -73,12 +108,12 @@ func TestLoadConfig(t *testing.T) {
 		}
 
 		configPath := tempFile.Name()
-		configLoader := NewConfigLoader(configPath)
-		config, err := configLoader.LoadConfig()
+		configLoader := NewConfigLoader(configPath, nil, nil)
+		err = configLoader.LoadConfig()
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error decoding config file")
-		assert.Nil(t, config)
+		assert.Nil(t, configLoader.ColumnAliasConfig)
 	})
 }
 
