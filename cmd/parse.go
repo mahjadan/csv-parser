@@ -7,7 +7,9 @@ import (
 	"employee-csv-parser/pkg/config"
 	"employee-csv-parser/pkg/parser"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var columnAliasConfig map[string][]string
@@ -34,9 +36,14 @@ rcsv parse source/roster1.csv.`,
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		csvFile := args[0]
+		csvFileName := args[0]
 		fmt.Println("Run Config:", columnAliasConfig)
-		return parser.Parse(columnAliasConfig, csvFile)
+		csvFile, err := os.Open(csvFileName)
+		if err != nil {
+			return errors.Wrap(err, "error opening CSV file")
+		}
+		defer csvFile.Close()
+		return parser.Parse(csvFile, columnAliasConfig, csvFileName)
 	},
 }
 

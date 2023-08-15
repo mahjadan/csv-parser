@@ -12,13 +12,7 @@ import (
 	"time"
 )
 
-func Parse(columnAliases map[string][]string, csfFilePath string) error {
-	csvFile, err := os.Open(csfFilePath)
-	if err != nil {
-		return errors.Wrap(err, "error opening CSV file")
-	}
-	defer csvFile.Close()
-
+func Parse(csvFile io.Reader, columnAliases map[string][]string, csfFilePath string) error {
 	reader := csv.NewReader(csvFile)
 	headers, err := reader.Read()
 	if err != nil {
