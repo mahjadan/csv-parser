@@ -4,12 +4,12 @@ import (
 	"employee-csv-parser/pkg/utils"
 	"encoding/json"
 	"github.com/pkg/errors"
+	"io"
 	"os"
 )
 
 type Loader struct {
 	configPath string
-	config     map[string][]string
 }
 
 func NewConfigLoader(configPath string) *Loader {
@@ -25,17 +25,21 @@ func (c Loader) LoadConfig() (map[string][]string, error) {
 	}
 	defer configFile.Close()
 
+	configMap, err := c.parseConfig(configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	utils.NormalizeMapKeys(configMap)
+	return configMap, nil
+}
+
+func (c Loader) parseConfig(configFile io.Reader) (map[string][]string, error) {
+	var configMap map[string][]string
 	decoder := json.NewDecoder(configFile)
-	err = decoder.Decode(&c.config)
+	err := decoder.Decode(&configMap)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error decoding config file [%v]", c.configPath)
 	}
-
-	c.normalizeConfigMap()
-	return c.config, nil
-}
-func (c Loader) normalizeConfigMap() {
-	for k, v := range c.config {
-		c.config[k] = utils.ToLowerTrimSlice(v)
-	}
+	return configMap, nil
 }
