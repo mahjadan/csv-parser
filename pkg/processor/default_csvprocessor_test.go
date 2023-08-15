@@ -26,6 +26,25 @@ func TestDefaultCSVProcessor(t *testing.T) {
 		assert.Equal(t, record, mockWriter.LastWriteArgument)
 	})
 
+	t.Run("ProcessValidRecord_WithDifferentColumnOrder", func(t *testing.T) {
+		mockWriter, mockInvalidWriter := mockWriters(t)
+		columnIdentifier := csvmapper.MockColumnIdentifier{}
+		columnIdentifier.On("IndexForColumn", "id").Return(2)
+		columnIdentifier.On("IndexForColumn", "name").Return(1)
+		columnIdentifier.On("IndexForColumn", "email").Return(3)
+		columnIdentifier.On("IndexForColumn", "salary").Return(0)
+		processor := processor.NewCSVProcessor(mockWriter, mockInvalidWriter, &columnIdentifier)
+		record := []string{"5000", "John", "1", "john@example.com"}
+
+		processor.ProcessValidRecord(record)
+
+		expected := []string{"1", "John", "john@example.com", "5000"}
+		mockWriter.AssertExpectations(t)
+		mockInvalidWriter.AssertNotCalled(t, "Write", mock.Anything)
+		assert.Equal(t, 1, mockWriter.WriteCallCount)
+		assert.Equal(t, expected, mockWriter.LastWriteArgument)
+	})
+
 	t.Run("ProcessValidRecord_InvalidEmployee", func(t *testing.T) {
 		mockWriter, mockInvalidWriter := mockWriters(t)
 		columnIdentifier := mockColumnIdentifier(t)

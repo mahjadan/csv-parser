@@ -10,45 +10,9 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:                    "rcsv",
-	Aliases:                nil,
-	SuggestFor:             nil,
-	Short:                  "Rain csv utility",
-	Long:                   `Rain csv utility to import employees data`,
-	ValidArgs:              nil,
-	ValidArgsFunction:      nil,
-	Args:                   nil,
-	ArgAliases:             nil,
-	BashCompletionFunction: "",
-	Deprecated:             "",
-	Annotations:            nil,
-	Version:                "",
-	PersistentPreRun:       nil,
-	PersistentPreRunE:      nil,
-
-	RunE:               nil,
-	PostRun:            nil,
-	PostRunE:           nil,
-	PersistentPostRun:  nil,
-	PersistentPostRunE: nil,
-	FParseErrWhitelist: cobra.FParseErrWhitelist{
-		UnknownFlags: false,
-	},
-	CompletionOptions: cobra.CompletionOptions{
-		DisableDefaultCmd:   false,
-		DisableNoDescFlag:   false,
-		DisableDescriptions: false,
-		HiddenDefaultCmd:    false,
-	},
-	TraverseChildren:           false,
-	Hidden:                     false,
-	SilenceErrors:              false,
-	SilenceUsage:               false,
-	DisableFlagParsing:         false,
-	DisableAutoGenTag:          false,
-	DisableFlagsInUseLine:      false,
-	DisableSuggestions:         false,
-	SuggestionsMinimumDistance: 0,
+	Use:   "rcsv",
+	Short: "Rain csv utility",
+	Long:  `Rain csv utility to import employees data`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

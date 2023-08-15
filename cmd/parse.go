@@ -25,8 +25,8 @@ var parseCmd = &cobra.Command{
 	Use:   "parse [filename.csv]",
 	Short: "parse a given csv file.",
 	Long: `parse employees csv file and writes the valid and invalid records into separate files
-and usage of using your command. For example:
-rcsv parse source/roster1.csv.`,
+	and usage of using your command. For example:
+	rcsv parse source/roster1.csv.`,
 	Example: "rcsv parse input/roster1.csv",
 	Args:    cobra.ExactArgs(1),
 
