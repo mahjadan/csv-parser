@@ -9,32 +9,38 @@ import (
 )
 
 type Loader struct {
-	configPath string
+	configPath         string
+	ValidColumnNames   []string
+	InvalidColumnNames []string
+	ColumnAliasConfig  map[string][]string
 }
 
-func NewConfigLoader(configPath string) *Loader {
+func NewConfigLoader(configPath string, validColumns []string, invalidColumns []string) *Loader {
 	return &Loader{
-		configPath: configPath,
+		configPath:         configPath,
+		ValidColumnNames:   validColumns,
+		InvalidColumnNames: invalidColumns,
 	}
 }
 
-func (c Loader) LoadConfig() (map[string][]string, error) {
+func (c *Loader) LoadConfig() error {
 	configFile, err := os.Open(c.configPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "opening config file")
+		return errors.Wrapf(err, "opening config file")
 	}
 	defer configFile.Close()
 
 	configMap, err := c.parseConfig(configFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	utils.NormalizeMapKeys(configMap)
-	return configMap, nil
+	c.ColumnAliasConfig = configMap
+	return nil
 }
 
-func (c Loader) parseConfig(configFile io.Reader) (map[string][]string, error) {
+func (c *Loader) parseConfig(configFile io.Reader) (map[string][]string, error) {
 	var configMap map[string][]string
 	decoder := json.NewDecoder(configFile)
 	err := decoder.Decode(&configMap)

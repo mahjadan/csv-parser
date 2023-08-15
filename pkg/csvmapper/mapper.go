@@ -5,46 +5,43 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ColumnIdentifier struct {
-	columnIndexMap     map[string]int
-	columnAliases      map[string][]string
-	ValidColumnNames   []string
-	InvalidColumnNames []string
+type DefaultColumnIdentifier struct {
+	columnIndexMap map[string]int
 }
 
-var standardOutputColumns = []string{"id", "name", "email", "salary"}
-
-func (c *ColumnIdentifier) IndexForColumn(columnName string) int {
+func (c *DefaultColumnIdentifier) IndexForColumn(columnName string) int {
 	return c.columnIndexMap[columnName]
 }
-func NewColumnIdentifier(columnAliases map[string][]string, csvHeaders []string) ColumnIdentifier {
-	columnIndexMap := make(map[string]int)
-	for columnName := range columnAliases {
-		columnIndexMap[columnName] = -1
-	}
-	return ColumnIdentifier{
-		columnIndexMap:     columnIndexMap,
-		columnAliases:      columnAliases,
-		InvalidColumnNames: append(csvHeaders, "errors"),
-		ValidColumnNames:   standardOutputColumns,
+func NewDefaultColumnIdentifier() *DefaultColumnIdentifier {
+	return &DefaultColumnIdentifier{
+		columnIndexMap: make(map[string]int),
 	}
 }
-func (c *ColumnIdentifier) MapColumnToIndexes(csvHeaders []string) error {
+func (c *DefaultColumnIdentifier) MapColumnToIndexes(csvHeaders []string, columnAliases map[string][]string) error {
+	for columnName := range columnAliases {
+		c.columnIndexMap[columnName] = -1
+	}
+
 	for index, header := range csvHeaders {
-		for columnName, alternativeNames := range c.columnAliases {
+		for columnName, alternativeNames := range columnAliases {
 			if utils.SliceContains(alternativeNames, header) {
 				c.columnIndexMap[columnName] = index
 			}
 		}
 	}
-	return c.hasMissingColumn()
+	return c.hasMissingColumn(columnAliases)
 }
 
-func (c *ColumnIdentifier) hasMissingColumn() error {
+func (c *DefaultColumnIdentifier) hasMissingColumn(columnAliases map[string][]string) error {
 	for columnName, index := range c.columnIndexMap {
 		if index == -1 {
-			return errors.Errorf("missing column/header: '%s'. Tried alternatives: %v", columnName, c.columnAliases[columnName])
+			return errors.Errorf("missing column/header: '%s'. Tried alternatives: %v", columnName, columnAliases[columnName])
 		}
 	}
 	return nil
+}
+
+type ColumnIdentifier interface {
+	IndexForColumn(columnName string) int
+	MapColumnToIndexes(csvHeaders []string, columnAliases map[string][]string) error
 }

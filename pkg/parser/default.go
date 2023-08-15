@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"employee-csv-parser/pkg/config"
 	"employee-csv-parser/pkg/csvmapper"
 	"employee-csv-parser/pkg/processor"
 	"employee-csv-parser/pkg/utils"
@@ -12,7 +13,7 @@ import (
 	"time"
 )
 
-func Parse(csvFile io.Reader, columnAliases map[string][]string, csfFilePath string) error {
+func Parse(csvFile io.Reader, columnsConfig *config.Loader, columnIdentifier csvmapper.ColumnIdentifier) error {
 	reader := csv.NewReader(csvFile)
 	headers, err := reader.Read()
 	if err != nil {
@@ -21,8 +22,7 @@ func Parse(csvFile io.Reader, columnAliases map[string][]string, csfFilePath str
 	}
 	headers = utils.ToLowerTrimSlice(headers)
 
-	columnIdentifier := csvmapper.NewColumnIdentifier(columnAliases, headers)
-	err = columnIdentifier.MapColumnToIndexes(headers)
+	err = columnIdentifier.MapColumnToIndexes(headers, columnsConfig.ColumnAliasConfig)
 	if err != nil {
 		return err
 	}
@@ -45,10 +45,10 @@ func Parse(csvFile io.Reader, columnAliases map[string][]string, csfFilePath str
 	// move flush inside the processor
 	defer validWriter.Flush()
 	defer invalidWriter.Flush()
-	// todo why the name CSVProcessor ? its specific to csv ?
+	// todo why the name DefaultCSVRecordProcessor ? its specific to csv ?
 	csvProcessor := processor.NewCSVProcessor(validWriter, invalidWriter, columnIdentifier)
 	// Write headers to the valid CSV file
-	err = csvProcessor.InitializeHeaders()
+	err = csvProcessor.WriteHeaders(columnsConfig.ValidColumnNames, columnsConfig.InvalidColumnNames)
 	if err != nil {
 		return errors.Wrap(err, "error writing headers")
 	}

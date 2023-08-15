@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"employee-csv-parser/pkg/config"
+	"employee-csv-parser/pkg/csvmapper"
 	"employee-csv-parser/pkg/parser"
 	"fmt"
 	"github.com/pkg/errors"
@@ -12,9 +13,12 @@ import (
 	"os"
 )
 
-var columnAliasConfig map[string][]string
+var columnsConfig *config.Loader
 
 const configPath = "config/config.json"
+
+var StandardOutputColumns = []string{"id", "name", "email", "salary"}
+var InvalidOutputColumns = append(StandardOutputColumns, "errors")
 
 // parseCmd represents the parse command
 var parseCmd = &cobra.Command{
@@ -27,23 +31,25 @@ rcsv parse source/roster1.csv.`,
 	Args:    cobra.ExactArgs(1),
 
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		loader := config.NewConfigLoader(configPath)
-		cfg, err := loader.LoadConfig()
+		ld := config.NewConfigLoader(configPath, StandardOutputColumns, InvalidOutputColumns)
+		err := ld.LoadConfig()
 		if err != nil {
 			return err
 		}
-		columnAliasConfig = cfg
+		columnsConfig = ld
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		csvFileName := args[0]
-		fmt.Println("Run Config:", columnAliasConfig)
+		fmt.Println("Run Config:", columnsConfig)
 		csvFile, err := os.Open(csvFileName)
 		if err != nil {
 			return errors.Wrap(err, "error opening CSV file")
 		}
 		defer csvFile.Close()
-		return parser.Parse(csvFile, columnAliasConfig, csvFileName)
+		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
+
+		return parser.Parse(csvFile, columnsConfig, columnIdentifier)
 	},
 }
 
