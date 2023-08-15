@@ -42,12 +42,10 @@ func Parse(csvFile io.Reader, columnsConfig *config.Loader, columnIdentifier csv
 
 	validWriter := csv.NewWriter(validFile)
 	invalidWriter := csv.NewWriter(invalidFile)
-	// move flush inside the processor
 	defer validWriter.Flush()
 	defer invalidWriter.Flush()
-	// todo why the name DefaultCSVRecordProcessor ? its specific to csv ?
 	csvProcessor := processor.NewCSVProcessor(validWriter, invalidWriter, columnIdentifier)
-	// Write headers to the valid CSV file
+
 	err = csvProcessor.WriteHeaders(columnsConfig.ValidColumnNames, columnsConfig.InvalidColumnNames)
 	if err != nil {
 		return errors.Wrap(err, "error writing headers")
