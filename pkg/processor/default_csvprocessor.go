@@ -58,3 +58,7 @@ func (p *DefaultCSVProcessor) WriteHeaders(validColumnNames, invalidColumnNames 
 	}
 	return nil
 }
+
+func (p *DefaultCSVProcessor) GetUniqueRecords() int64 {
+	return int64(len(p.processedEmails))
+}

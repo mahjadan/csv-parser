@@ -67,7 +67,17 @@ var parseCmd = &cobra.Command{
 		defer invalidFile.Close()
 
 		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
-		return parser.Parse(csvFile, validFile, invalidFile, columnsConfig, columnIdentifier)
+		err = parser.Parse(csvFile, validFile, invalidFile, columnsConfig, columnIdentifier)
+		stat, err := validFile.Stat()
+		if err == nil {
+			fmt.Printf("Valid file size: %v bytes \n", stat.Size())
+		}
+		istat, err := invalidFile.Stat()
+		if err == nil {
+			fmt.Printf("Invalid file size: %v bytes \n", istat.Size())
+		}
+
+		return err
 	},
 }
 
