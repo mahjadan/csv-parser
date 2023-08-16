@@ -2,9 +2,9 @@ package parser
 
 import (
 	"bytes"
-	"employee-csv-parser/pkg/config"
-	"employee-csv-parser/pkg/csvmapper"
 	"github.com/stretchr/testify/assert"
+	"rcsv/pkg/config"
+	"rcsv/pkg/csvmapper"
 	"strings"
 	"testing"
 )

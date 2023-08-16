@@ -1,8 +1,8 @@
 package processor
 
 import (
-	"employee-csv-parser/pkg/csvmapper"
-	"employee-csv-parser/pkg/models"
+	"rcsv/pkg/csvmapper"
+	"rcsv/pkg/models"
 )
 
 type DefaultCSVProcessor struct {

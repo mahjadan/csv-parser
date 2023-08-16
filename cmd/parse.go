@@ -4,13 +4,13 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"employee-csv-parser/pkg/config"
-	"employee-csv-parser/pkg/csvmapper"
-	"employee-csv-parser/pkg/parser"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"os"
+	"rcsv/pkg/config"
+	"rcsv/pkg/csvmapper"
+	"rcsv/pkg/parser"
 	"time"
 )
 

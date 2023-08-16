@@ -1,8 +1,8 @@
 package csvmapper
 
 import (
-	"employee-csv-parser/pkg/utils"
 	"github.com/pkg/errors"
+	"rcsv/pkg/utils"
 	"strings"
 )
 

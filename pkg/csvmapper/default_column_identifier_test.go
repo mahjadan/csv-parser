@@ -3,8 +3,8 @@ package csvmapper_test
 import (
 	"testing"
 
-	"employee-csv-parser/pkg/csvmapper"
 	"github.com/stretchr/testify/assert"
+	"rcsv/pkg/csvmapper"
 )
 
 func TestDefaultColumnIdentifier_MapColumnToIndexes(t *testing.T) {

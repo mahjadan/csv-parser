@@ -1,14 +1,14 @@
 package parser
 
 import (
-	"employee-csv-parser/pkg/config"
-	"employee-csv-parser/pkg/csvmapper"
-	"employee-csv-parser/pkg/processor"
-	"employee-csv-parser/pkg/utils"
 	"encoding/csv"
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
+	"rcsv/pkg/config"
+	"rcsv/pkg/csvmapper"
+	"rcsv/pkg/processor"
+	"rcsv/pkg/utils"
 	"time"
 )
 

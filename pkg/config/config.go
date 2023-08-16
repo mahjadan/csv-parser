@@ -1,10 +1,10 @@
 package config
 
 import (
-	"employee-csv-parser/pkg/utils"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"io"
+	"rcsv/pkg/utils"
 )
 
 type Loader struct {

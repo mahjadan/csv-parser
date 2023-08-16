@@ -1,9 +1,9 @@
 package processor_test
 
 import (
-	"employee-csv-parser/pkg/csvmapper"
-	"employee-csv-parser/pkg/processor"
 	"github.com/stretchr/testify/mock"
+	"rcsv/pkg/csvmapper"
+	"rcsv/pkg/processor"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

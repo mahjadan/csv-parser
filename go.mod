@@ -1,4 +1,4 @@
-module employee-csv-parser
+module rcsv
 
 go 1.19
 
