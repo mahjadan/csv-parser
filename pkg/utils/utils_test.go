@@ -5,26 +5,101 @@ import (
 	"testing"
 )
 
-func TestNormalizeConfigMap(t *testing.T) {
-	configMap := map[string][]string{
-		"name":   {"First", "Last"},
-		"salary": {"Wage"},
-		"email":  {"Email", "E-mail"},
-		"id":     {"Employee-ID"},
+func TestNormalizeMapKeys(t *testing.T) {
+
+	t.Run("NormalizeMapKeys", func(t *testing.T) {
+		testCases := []struct {
+			name              string
+			inputConfigMap    map[string][]string
+			expectedConfigMap map[string][]string
+		}{
+			{
+				name: "NormalCase",
+				inputConfigMap: map[string][]string{
+					"name":   {"First", "Last"},
+					"salary": {"Wage"},
+					"email":  {"Email", "E-mail"},
+					"id":     {"Employee-ID"},
+				},
+				expectedConfigMap: map[string][]string{
+					"name":   {"first", "last"},
+					"salary": {"wage"},
+					"email":  {"email", "e-mail"},
+					"id":     {"employee-id"},
+				},
+			},
+			{
+				name:              "EmptyConfigMap",
+				inputConfigMap:    map[string][]string{},
+				expectedConfigMap: map[string][]string{},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				NormalizeMapKeys(tc.inputConfigMap)
+				assert.Equal(t, tc.expectedConfigMap, tc.inputConfigMap)
+			})
+		}
+	})
+}
+
+func TestSliceContains(t *testing.T) {
+	testCases := []struct {
+		name           string
+		slice          []string
+		item           string
+		expectedResult bool
+	}{
+		{
+			name:           "ItemExists",
+			slice:          []string{"name", "first_name", "full_name"},
+			item:           "full_name",
+			expectedResult: true,
+		},
+		{
+			name:           "ItemDoesNotExist",
+			slice:          []string{"name", "first_name", "full_name"},
+			item:           "f.name",
+			expectedResult: false,
+		},
+		{
+			name:           "EmptySlice",
+			slice:          []string{},
+			item:           "name",
+			expectedResult: false,
+		},
 	}
-	NormalizeMapKeys(configMap)
 
-	assert.Equal(t, 2, len(configMap["name"]))
-	assert.Equal(t, "first", configMap["name"][0])
-	assert.Equal(t, "last", configMap["name"][1])
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := SliceContains(tc.slice, tc.item)
+			assert.Equal(t, tc.expectedResult, result)
+		})
+	}
+}
+func TestToLowerTrimSlice(t *testing.T) {
+	testCases := []struct {
+		name           string
+		columnSlice    []string
+		expectedResult []string
+	}{
+		{
+			name:           "NormalCase",
+			columnSlice:    []string{" First ", " Last ", "\uFEFFEmail"},
+			expectedResult: []string{"first", "last", "email"},
+		},
+		{
+			name:           "EmptySlice",
+			columnSlice:    []string{},
+			expectedResult: []string{},
+		},
+	}
 
-	assert.Equal(t, 1, len(configMap["salary"]))
-	assert.Equal(t, "wage", configMap["salary"][0])
-
-	assert.Equal(t, 2, len(configMap["email"]))
-	assert.Equal(t, "email", configMap["email"][0])
-	assert.Equal(t, "e-mail", configMap["email"][1])
-
-	assert.Equal(t, 1, len(configMap["id"]))
-	assert.Equal(t, "employee-id", configMap["id"][0])
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := ToLowerTrimSlice(tc.columnSlice)
+			assert.Equal(t, tc.expectedResult, result)
+		})
+	}
 }
