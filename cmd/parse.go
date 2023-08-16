@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"os"
+	"time"
 )
 
 var columnsConfig *config.Loader
@@ -31,8 +32,14 @@ var parseCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		ld := config.NewConfigLoader(configPath, StandardOutputColumns, InvalidOutputColumns)
-		err := ld.LoadConfig()
+		configFile, err := os.Open(configPath)
+		if err != nil {
+			return errors.Wrapf(err, "opening config file [%v]", configPath)
+		}
+		defer configFile.Close()
+
+		ld := config.NewConfigLoader(configFile, StandardOutputColumns, InvalidOutputColumns)
+		err = ld.LoadConfig()
 		if err != nil {
 			return err
 		}
@@ -47,9 +54,20 @@ var parseCmd = &cobra.Command{
 			return errors.Wrap(err, "error opening CSV file")
 		}
 		defer csvFile.Close()
-		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
+		validFile, err := createCSVFile("valid")
+		if err != nil {
+			return err
+		}
+		defer validFile.Close()
 
-		return parser.Parse(csvFile, columnsConfig, columnIdentifier)
+		invalidFile, err := createCSVFile("invalid")
+		if err != nil {
+			return err
+		}
+		defer invalidFile.Close()
+
+		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
+		return parser.Parse(csvFile, validFile, invalidFile, columnsConfig, columnIdentifier)
 	},
 }
 
@@ -65,4 +83,17 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// parseCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+func createCSVFile(fileNamePrefix string) (*os.File, error) {
+	fileName := generateFileName(fileNamePrefix)
+	file, err := os.Create(fileName)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error creating %s CSV file", fileNamePrefix)
+	}
+	return file, nil
+}
+
+func generateFileName(prefix string) string {
+	timestamp := time.Now().Format("20060102150405")
+	return fmt.Sprintf("%s_%s.csv", prefix, timestamp)
 }
