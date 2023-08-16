@@ -5,47 +5,43 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"io"
-	"os"
 )
 
 type Loader struct {
-	configPath         string
+	configFile         io.Reader
 	ValidColumnNames   []string
 	InvalidColumnNames []string
 	ColumnAliasConfig  map[string][]string
 }
 
-func NewConfigLoader(configPath string, validColumns []string, invalidColumns []string) *Loader {
+func NewConfigLoader(configFile io.Reader, validColumns []string, invalidColumns []string) *Loader {
 	return &Loader{
-		configPath:         configPath,
+		configFile:         configFile,
 		ValidColumnNames:   validColumns,
 		InvalidColumnNames: invalidColumns,
 	}
 }
 
 func (c *Loader) LoadConfig() error {
-	configFile, err := os.Open(c.configPath)
-	if err != nil {
-		return errors.Wrapf(err, "opening config file")
-	}
-	defer configFile.Close()
-
-	configMap, err := c.parseConfig(configFile)
+	configMap, err := c.parseConfig()
 	if err != nil {
 		return err
 	}
 
 	utils.NormalizeMapKeys(configMap)
+	if len(configMap) == 0 {
+		return errors.New("config file is empty")
+	}
 	c.ColumnAliasConfig = configMap
 	return nil
 }
 
-func (c *Loader) parseConfig(configFile io.Reader) (map[string][]string, error) {
+func (c *Loader) parseConfig() (map[string][]string, error) {
 	var configMap map[string][]string
-	decoder := json.NewDecoder(configFile)
+	decoder := json.NewDecoder(c.configFile)
 	err := decoder.Decode(&configMap)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error decoding config file [%v]", c.configPath)
+		return nil, errors.Wrapf(err, "error decoding config file")
 	}
 	return configMap, nil
 }
