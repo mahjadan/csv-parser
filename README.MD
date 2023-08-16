@@ -8,12 +8,12 @@ The **Rain CSV Parser** is a command-line tool built in Golang to parse CSV file
 
 ## Features
 
-- Parses CSV files and standardizes the data for Rain's processing.
-- Flags data problems and outputs a summary in the console.
-- Generates two CSV files: one for valid data and one for invalid data.
-- Utilizes Golang  1.19 with Go modules support.
+- Automatically interprets CSV files and harmonizes the data to conform with Rain's processing specifications.
+- Detects data anomalies and presents an informative summary directly in the command line interface.- Efficiently processes CSV files, ensuring uniformity and compatibility with Rain's processing requirements.
+- Identifies data inconsistencies and highlights potential issues, providing a comprehensive overview in the command line interface.
+- Creates two distinct CSV files for easy data segregation: one for valid records and another for records with issues.
+- Built using the robust Golang 1.19, leveraging Go modules for optimal package management and reliability.
 
-## Usage
 
 ## Installation
 
