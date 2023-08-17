@@ -47,6 +47,13 @@ For further insights into the available command options, the tool offers a built
 ```
 This command will provide you with information on how to change the **configuration file path** and the **output directory** for processed CSV files. 
 
+## Using Cobra and Viper
+The Rain CSV Processing Tool leverages the Cobra and Viper packages for building the command-line interface and handling configurations. These packages are excellent choices for this project due to their robustness, ease of use, and popularity within the Go community.
+
+Cobra simplifies the creation of powerful command-line interfaces by providing a simple and intuitive framework. Viper, on the other hand, enhances configuration management by supporting various configuration formats and providing a clean way to bind configuration values to structs.
+
+By using Cobra and Viper, the Rain CSV Processing Tool achieves a well-structured and user-friendly command-line experience while ensuring flexible and efficient configuration management.
+
 ## How It Works
 The Rain CSV Processing Tool processes CSV files with varying structures. It dynamically adapts to column names and orders.
 
