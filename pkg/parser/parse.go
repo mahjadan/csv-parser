@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func Parse(csvFile io.Reader, validFile, invalidFile io.Writer, columnsConfig *config.Loader, columnIdentifier csvmapper.ColumnIdentifier) error {
+func Parse(csvFile io.Reader, validFile, invalidFile io.Writer, configLoader *config.Loader, columnIdentifier csvmapper.ColumnIdentifier) error {
 	startTime := time.Now()
 	var totalInvalidRecords int64 = 0
 	var totalValidRecords int64 = 0
@@ -24,7 +24,7 @@ func Parse(csvFile io.Reader, validFile, invalidFile io.Writer, columnsConfig *c
 	}
 	headers = utils.ToLowerTrimSlice(headers)
 
-	err = columnIdentifier.MapColumnToIndexes(headers, columnsConfig.ColumnAliasConfig)
+	err = columnIdentifier.MapColumnToIndexes(headers, configLoader.ColumnAliasConfig)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func Parse(csvFile io.Reader, validFile, invalidFile io.Writer, columnsConfig *c
 	defer invalidWriter.Flush()
 	csvProcessor := processor.NewCSVProcessor(validWriter, invalidWriter, columnIdentifier)
 
-	err = csvProcessor.WriteHeaders(columnsConfig.ValidColumnNames, columnsConfig.InvalidColumnNames)
+	err = csvProcessor.WriteHeaders(configLoader.ValidColumnNames, append(headers, "errors"))
 	if err != nil {
 		return errors.Wrap(err, "error writing headers")
 	}
