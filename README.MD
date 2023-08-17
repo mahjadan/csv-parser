@@ -83,7 +83,17 @@ The project includes comprehensive unit tests to ensure the reliability of the t
 ```bash
 go test -v ./...
 ```
+## Running Benchmark Tests
 
+To run the benchmark tests for the Rain CSV Processing Tool's `cmd` package, follow these steps:
+
+1. Open a terminal and navigate to the root directory of the project.
+2. Run the following command to change to the `cmd` directory:
+   ```bash
+   cd cmd
+   go test -bench=Parse
+   ```
+   
 ## Future Enhancements
 As the project evolves, the tool can be further improved with the following enhancements:
 
