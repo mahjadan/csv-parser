@@ -21,7 +21,7 @@ func NewCSVProcessor(validWriter, invalidWriter CSVWriter, columnIdentifier csvm
 	}
 }
 
-func (p *DefaultCSVProcessor) ProcessValidRecord(record []string) {
+func (p *DefaultCSVProcessor) ProcessValidRecord(record []string) bool {
 	employee := models.Employee{
 		ID:     record[p.columnIdentifier.IndexForColumn("id")],
 		Email:  record[p.columnIdentifier.IndexForColumn("email")],
@@ -31,12 +31,13 @@ func (p *DefaultCSVProcessor) ProcessValidRecord(record []string) {
 	err := employee.IsValid()
 	if err != nil {
 		p.WriteInvalidRecord(record, err.Error())
-		return
+		return false
 	}
 	if _, exists := p.processedEmails[employee.Email]; !exists {
 		p.processedEmails[employee.Email] = struct{}{}
 		p.writeValidRecord(employee)
 	}
+	return true
 }
 
 func (p *DefaultCSVProcessor) writeValidRecord(employee models.Employee) {

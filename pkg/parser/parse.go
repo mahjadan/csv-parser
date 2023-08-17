@@ -49,8 +49,12 @@ func Parse(csvFile io.Reader, validFile, invalidFile io.Writer, configLoader *co
 			totalInvalidRecords++
 			continue
 		}
-		csvProcessor.ProcessValidRecord(record)
-		totalValidRecords++
+		validRecord := csvProcessor.ProcessValidRecord(record)
+		if validRecord {
+			totalValidRecords++
+		} else {
+			totalInvalidRecords++
+		}
 	}
 	endTime := time.Now()
 	processingTime := endTime.Sub(startTime)

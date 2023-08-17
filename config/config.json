@@ -1,10 +1,10 @@
 {
 "column_aliases":{
-  "name": ["Name", "First", "Last", "Full_name", "f.name"],
+  "name": ["Name", "First", "Last", "f. name","Full_name", "f.name","first name"],
   "salary": ["wage", "salary", "pay", "Rate"],
   "email": ["Email", "E-mail", "e_mail"],
-  "id": ["ID", "emp id","Number"]
-},
+  "id": ["ID", "emp id","Number","Employee Number"]
+  },
   "output": {
     "valid_columns": ["id", "name", "email", "salary"]
   }

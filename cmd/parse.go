@@ -51,10 +51,15 @@ func runParse(args []string) error {
 	defer invalidFile.Close()
 
 	columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
-	defer printFileSize(validFile)
-	defer printFileSize(invalidFile)
-	defer printFileSize(csvFile)
-	return parser.Parse(csvFile, validFile, invalidFile, configLoader, columnIdentifier)
+
+	err = parser.Parse(csvFile, validFile, invalidFile, configLoader, columnIdentifier)
+	if err != nil {
+		return err
+	}
+	printFileSize(validFile)
+	printFileSize(invalidFile)
+	printFileSize(csvFile)
+	return nil
 }
 
 func printFileSize(validFile *os.File) {

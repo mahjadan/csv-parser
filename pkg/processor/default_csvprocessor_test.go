@@ -18,12 +18,13 @@ func TestDefaultCSVProcessor(t *testing.T) {
 		processor := processor.NewCSVProcessor(mockWriter, mockInvalidWriter, &columnIdentifier)
 		record := []string{"1", "John", "john@example.com", "5000"}
 
-		processor.ProcessValidRecord(record)
+		validRecord := processor.ProcessValidRecord(record)
 
 		mockWriter.AssertExpectations(t)
 		mockInvalidWriter.AssertNotCalled(t, "Write", mock.Anything)
 		assert.Equal(t, 1, mockWriter.WriteCallCount)
 		assert.Equal(t, record, mockWriter.LastWriteArgument)
+		assert.True(t, validRecord)
 	})
 	t.Run("ProcessValidRecord_WithDuplicatedEmail", func(t *testing.T) {
 		mockWriter, mockInvalidWriter := mockWriters(t)
@@ -74,12 +75,13 @@ func TestDefaultCSVProcessor(t *testing.T) {
 		processor := processor.NewCSVProcessor(mockWriter, mockInvalidWriter, &columnIdentifier)
 		record := []string{"1", "John", "john@", "$90"}
 
-		processor.ProcessValidRecord(record)
+		validRecord := processor.ProcessValidRecord(record)
 
 		mockInvalidWriter.AssertExpectations(t)
 		mockWriter.AssertNotCalled(t, "Write", mock.Anything)
 		assert.Equal(t, 1, mockInvalidWriter.WriteCallCount)
 		assert.Equal(t, append(record, "Invalid email format"), mockInvalidWriter.LastWriteArgument)
+		assert.False(t, validRecord)
 	})
 
 	t.Run("WriteHeaders", func(t *testing.T) {
