@@ -1,47 +1,40 @@
 package config
 
 import (
-	"encoding/json"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	"io"
 	"rcsv/pkg/utils"
 )
 
 type Loader struct {
-	configFile         io.Reader
-	ValidColumnNames   []string
-	InvalidColumnNames []string
-	ColumnAliasConfig  map[string][]string
+	configFile        io.Reader
+	ValidColumnNames  []string
+	ColumnAliasConfig map[string][]string
 }
 
-func NewConfigLoader(configFile io.Reader, validColumns []string, invalidColumns []string) *Loader {
+type Config struct {
+	ColumnAliases map[string][]string `mapstructure:"column_aliases"`
+	Output        struct {
+		ValidColumns []string `mapstructure:"valid_columns"`
+	} `mapstructure:"output"`
+}
+
+func NewConfigLoader(configPath string) (*Loader, error) {
+	v := viper.New()
+	v.SetConfigFile(configPath)
+	v.SetConfigType("json")
+	if err := v.ReadInConfig(); err != nil {
+		return nil, errors.Wrap(err, "error reading config file")
+	}
+
+	var config Config
+	if err := v.Unmarshal(&config); err != nil {
+		return nil, errors.Wrap(err, "Error unmarshalling config")
+	}
+	utils.NormalizeMapKeys(config.ColumnAliases)
 	return &Loader{
-		configFile:         configFile,
-		ValidColumnNames:   validColumns,
-		InvalidColumnNames: invalidColumns,
-	}
-}
-
-func (c *Loader) LoadConfig() error {
-	configMap, err := c.parseConfig()
-	if err != nil {
-		return err
-	}
-
-	utils.NormalizeMapKeys(configMap)
-	if len(configMap) == 0 {
-		return errors.New("config file is empty")
-	}
-	c.ColumnAliasConfig = configMap
-	return nil
-}
-
-func (c *Loader) parseConfig() (map[string][]string, error) {
-	var configMap map[string][]string
-	decoder := json.NewDecoder(c.configFile)
-	err := decoder.Decode(&configMap)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error decoding config file")
-	}
-	return configMap, nil
+		ValidColumnNames:  config.Output.ValidColumns,
+		ColumnAliasConfig: config.ColumnAliases,
+	}, nil
 }

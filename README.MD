@@ -1,44 +1,56 @@
-# Todos:
-- output summary in the console (add this feature)
-- Add -c to the parse command to change the default path of the config file
+# Rain CSV Processing Tool
 
-# Rain CSV Parser
+The **Rain CSV Parser Tool** is a powerful command-line utility crafted in Golang, designed to streamline the parsing and standardization of CSV files received from diverse employers. With a keen focus on accuracy, efficiency, and adaptability, this tool transforms raw data into a structured format, ensuring seamless integration into Rain's processing pipeline.
 
-The **Rain CSV Parser** is a command-line tool built in Golang to parse CSV files coming from different employers and standardize the data for processing. This tool provides a solution that follows best practices, is well-organized, bug-free, and scalable. It allows you to process CSV files individually, ensuring clean and organized data for further processing.
+### Key Features:
 
-## Features
+- Automated Harmonization: Effortlessly transforms CSV data to match Rain's processing requirements, regardless of its original structure.
 
-- Automatically interprets CSV files and harmonizes the data to conform with Rain's processing specifications.
-- Detects data anomalies and presents an informative summary directly in the command line interface.- Efficiently processes CSV files, ensuring uniformity and compatibility with Rain's processing requirements.
-- Identifies data inconsistencies and highlights potential issues, providing a comprehensive overview in the command line interface.
-- Creates two distinct CSV files for easy data segregation: one for valid records and another for records with issues.
-- Built using the robust Golang 1.19, leveraging Go modules for optimal package management and reliability.
+- Anomaly Detection: Quickly identifies and reports data anomalies, offering insightful summaries directly in the command line.
+
+- Efficient Processing: Ensures uniformity and compatibility with Rain's standards, streamlining data processing.
+
+- Smart Segmentation: Separates data into distinct valid and issue-containing CSV files, simplifying further analysis.
+
+- Golang Ecosystem Compatibility: Developed in Golang with support for Go modules, the Rain CSV Processing Tool embraces the latest language features, ensuring reliability, maintainability, and future-proofing.
 
 
 ## Installation
 
 1. Navigate to the root directory of the project.
-
-## Build
-
+2. Ensure you have Go 1.20 or later installed.
+## Building the Tool
+To build the Rain CSV Processing Tool, run the following command in your terminal:
 ```bash
 go build -o rcsv main.go
 ```
 
-## Run
-To parse a CSV file, use the following command:
-```bash
-./rcsv parse [filename.csv]
-```
-For example:
-```bash
-./rcsv parse input/roster1.csv
-```
+## Usage
+To utilize the Rain CSV Processing Tool for parsing CSV files, follow these steps:
 
+1. Run the command below, replacing [filename.csv] with the path to the CSV file you want to parse:
+
+    ```bash
+    ./rcsv parse [filename.csv]
+    ```
+    For example, to process a CSV file named roster1.csv located in the input directory:
+    ```bash
+    ./rcsv parse input/roster1.csv
+    ```
+    The tool will initiate the parsing process, creating separate valid and invalid CSV files. These files will be stored in the output directory within the project, providing a clear distinction between correctly processed data and records with issues.
+
+
+
+For further insights into the available command options, the tool offers a built-in help feature. You can access this feature by running the following command:
+```bash
+./rcsv parse -h
+```
+This command will provide you with information on how to change the **configuration file path** and the **output directory** for processed CSV files. 
 
 ## How It Works
-The Rain CSV Parser processes CSV files with varying structures. It dynamically adapts to column names and orders.
-The tool uses a configuration file (config/config.json) to define expected column names and possible aliases for each column. This ensures flexibility and extensibility when dealing with different file formats.
+The Rain CSV Processing Tool processes CSV files with varying structures. It dynamically adapts to column names and orders.
+
+The tool uses a configuration file (config/config.json) to define expected column names and possible aliases for each column, as well as what will be the output columns/format. This ensures flexibility and extensibility when dealing with different file formats.
 
 ## Architecture
 The tool is built using the Cobra framework, Viper configuration management, and the Golang standard library.
@@ -66,13 +78,14 @@ go test -v ./...
 ```
 
 ## Future Enhancements
-As requirements evolve, the tool can be enhanced with additional features:
+As the project evolves, the tool can be further improved with the following enhancements:
 
-- Support for a wider array of file formats beyond CSV.
-- Enhanced error handling and logging capabilities.
-- Add **Error Insights** by gathering statistics on the most common errors encountered during record processing and print the most frequent error message
-- Show loading cursor while processing the file is being processed.
-- Integration with Rain's broader data processing pipelines.
+- **Expanded File Format Support:** Extend support to encompass a broader range of file formats, moving beyond CSV.
+- **Enhanced Validation:** Incorporate additional validation mechanisms to align with evolving company requirements.
+- **Robust Error Handling:** Strengthen error handling and introduce comprehensive logging capabilities for improved troubleshooting.
+- **Error Insights:** Introduce an insightful feature that compiles statistics on commonly encountered errors during record processing, highlighting the most frequent error messages.
+- **Enhanced User Experience:** Enhance user experience by implementing a loading cursor in the terminal to indicate ongoing file processing.
+- **Seamless Data Integration:** Seamlessly integrate the tool with Rain's wider data processing pipelines to streamline overall data workflows.
 
 
 ## Conclusion

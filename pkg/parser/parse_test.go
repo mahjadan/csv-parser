@@ -2,9 +2,11 @@ package parser
 
 import (
 	"bytes"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"rcsv/pkg/config"
 	"rcsv/pkg/csvmapper"
+	"rcsv/pkg/utils"
 	"strings"
 	"testing"
 )
@@ -14,14 +16,10 @@ func TestParse(t *testing.T) {
 		csvData := "id,name,email,salary\n1,John,john@example.com,5000\n"
 		mockValidFile := &bytes.Buffer{}
 		mockInvalidFile := &bytes.Buffer{}
-		configFile := getConfigFile()
-		validColumnNames := []string{"id", "name", "email", "salary"}
-		invalidColumnNames := append(validColumnNames, "errors")
-
-		columnsConfig := setupConfig(t, configFile, validColumnNames, invalidColumnNames)
+		configLoader := getConfigLoader(t)
 		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
 
-		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, columnsConfig, columnIdentifier)
+		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, configLoader, columnIdentifier)
 
 		assert.NoError(t, err)
 		assert.Equal(t, "id,name,email,salary\n1,John,john@example.com,5000\n", mockValidFile.String())
@@ -31,14 +29,10 @@ func TestParse(t *testing.T) {
 		csvData := "id,name,email,salary\n1,John,john@example.com,5000\n2,Mah,mah@test.com,6000\n1,John,john@example.com,5000\n"
 		mockValidFile := &bytes.Buffer{}
 		mockInvalidFile := &bytes.Buffer{}
-		configFile := getConfigFile()
-		validColumnNames := []string{"id", "name", "email", "salary"}
-		invalidColumnNames := append(validColumnNames, "errors")
+		configLoader := getConfigLoader(t)
 
-		columnsConfig := setupConfig(t, configFile, validColumnNames, invalidColumnNames)
 		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
-
-		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, columnsConfig, columnIdentifier)
+		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, configLoader, columnIdentifier)
 
 		assert.NoError(t, err)
 		assert.Equal(t, "id,name,email,salary\n1,John,john@example.com,5000\n2,Mah,mah@test.com,6000\n", mockValidFile.String())
@@ -48,14 +42,11 @@ func TestParse(t *testing.T) {
 		csvData := "id,name,email\n1,John,john@example.com\n"
 		mockValidFile := &bytes.Buffer{}
 		mockInvalidFile := &bytes.Buffer{}
-		configFile := getConfigFile()
+		configLoader := getConfigLoader(t)
 
-		validColumnNames := []string{"id", "name", "email", "salary"}
-		invalidColumnNames := append(validColumnNames, "errors")
-		columnsConfig := setupConfig(t, configFile, validColumnNames, invalidColumnNames)
 		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
 
-		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, columnsConfig, columnIdentifier)
+		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, configLoader, columnIdentifier)
 
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "missing column/header: 'salary'")
@@ -64,21 +55,32 @@ func TestParse(t *testing.T) {
 	})
 }
 
-func getConfigFile() *strings.Reader {
-	configData := `{
-			"name": ["Name", "First", "Last"],
-			"salary": ["wage", "salary", "pay"],
-			"email": ["Email", "E-mail"],
-			"id": ["ID", "emp id"]
-		}`
-	configFile := strings.NewReader(configData)
-	return configFile
-}
-
-func setupConfig(t *testing.T, configFile *strings.Reader, validColumnNames []string, invalidColumnNames []string) *config.Loader {
+func getConfigLoader(t *testing.T) *config.Loader {
 	t.Helper()
-	mockColumnsConfig := config.NewConfigLoader(configFile, validColumnNames, invalidColumnNames)
-	err := mockColumnsConfig.LoadConfig()
-	assert.NoError(t, err)
-	return mockColumnsConfig
+	configData := `{
+		"column_aliases":{
+		  "name": ["Name", "First", "Last", "Full_name", "f.name"],
+		  "salary": ["wage", "salary", "pay", "Rate"],
+		  "email": ["Email", "E-mail", "e_mail"],
+		  "id": ["ID", "emp id","Number"]
+		},
+		  "output": {
+			"valid_columns": ["id", "name", "email", "salary"]
+		  }
+    }`
+	configFile := strings.NewReader(configData)
+	v := viper.New()
+	v.SetConfigType("json")
+	if err := v.ReadConfig(configFile); err != nil {
+		t.Fatalf("fail to read config file: %v", err)
+	}
+	c := config.Config{}
+	if err := v.Unmarshal(&c); err != nil {
+		t.Fatalf("fail to unmarshal config: %v", err)
+	}
+	utils.NormalizeMapKeys(c.ColumnAliases)
+	return &config.Loader{
+		ValidColumnNames:  c.Output.ValidColumns,
+		ColumnAliasConfig: c.ColumnAliases,
+	}
 }
