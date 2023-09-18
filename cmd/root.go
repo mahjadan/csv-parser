@@ -11,8 +11,8 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "rcsv",
-	Short: "Rain csv utility",
-	Long:  `Rain csv utility to import employees data`,
+	Short: "csv utility",
+	Long:  `csv utility to import employees data`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
