@@ -30,7 +30,7 @@ func TestParseIntegration(t *testing.T) {
 		}
 	}()
 
-	rootCmd.SetArgs([]string{"parse", "input/roster1.csv", "--config=config/config.json", "--output=" + tempOutputDir})
+	rootCmd.SetArgs([]string{"parse", "input/data1.csv", "--config=config/config.json", "--output=" + tempOutputDir})
 
 	err = rootCmd.Execute()
 	if err != nil {

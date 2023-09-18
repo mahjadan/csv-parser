@@ -20,7 +20,7 @@ var parseCmd = &cobra.Command{
 	Use:     "parse [filename.csv]",
 	Short:   "parse a given csv file.",
 	Long:    `parse csv file and writes the valid and invalid records into separate files.`,
-	Example: "rcsv parse input/roster1.csv",
+	Example: "rcsv parse input/data1.csv",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runParse(args)

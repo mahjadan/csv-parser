@@ -33,9 +33,9 @@ To utilize the CSV Processing Tool for parsing CSV files, follow these steps:
     ```bash
     ./rcsv parse [filename.csv]
     ```
-    For example, to process a CSV file named roster1.csv located in the input directory:
+    For example, to process a CSV file named data1.csv located in the input directory:
     ```bash
-    ./rcsv parse input/roster1.csv
+    ./rcsv parse input/data1.csv
     ```
     The tool will initiate the parsing process, creating separate valid and invalid CSV files. These files will be stored in the output directory within the project, providing a clear distinction between correctly processed data and records with issues.
 

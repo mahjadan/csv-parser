@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const inputCSVPath = "input/roster1.csv"
+const inputCSVPath = "input/data1.csv"
 
 func BenchmarkParse(b *testing.B) {
 
