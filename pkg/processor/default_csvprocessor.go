@@ -20,17 +20,20 @@ func NewCSVProcessor(validWriter, invalidWriter CSVWriter, columnIdentifier csvm
 		processedEmails:  make(map[string]struct{}),
 	}
 }
-
-func (p *DefaultCSVProcessor) ProcessValidRecord(record []string) bool {
+func (p *DefaultCSVProcessor) ProcessRecord(record []string, err error) bool {
+	if err != nil {
+		p.invalidWriter.Write(append(record, err.Error()))
+		return false
+	}
 	employee := models.Employee{
 		ID:     record[p.columnIdentifier.IndexForColumn("id")],
 		Email:  record[p.columnIdentifier.IndexForColumn("email")],
 		Name:   record[p.columnIdentifier.IndexForColumn("name")],
 		Salary: record[p.columnIdentifier.IndexForColumn("salary")],
 	}
-	err := employee.IsValid()
+	err = employee.IsValid()
 	if err != nil {
-		p.WriteInvalidRecord(record, err.Error())
+		p.invalidWriter.Write(append(record, err.Error()))
 		return false
 	}
 	if _, exists := p.processedEmails[employee.Email]; !exists {
@@ -44,11 +47,7 @@ func (p *DefaultCSVProcessor) writeValidRecord(employee models.Employee) {
 	p.validWriter.Write([]string{employee.ID, employee.Name, employee.Email, employee.Salary})
 }
 
-func (p *DefaultCSVProcessor) WriteInvalidRecord(record []string, errorMessage string) {
-	p.invalidWriter.Write(append(record, errorMessage))
-}
-
-func (p *DefaultCSVProcessor) WriteHeaders(validColumnNames, invalidColumnNames []string) error {
+func (p *DefaultCSVProcessor) InitializeHeaders(validColumnNames, invalidColumnNames []string) error {
 	err := p.validWriter.Write(validColumnNames)
 	if err != nil {
 		return err
@@ -62,4 +61,8 @@ func (p *DefaultCSVProcessor) WriteHeaders(validColumnNames, invalidColumnNames 
 
 func (p *DefaultCSVProcessor) GetUniqueRecords() int64 {
 	return int64(len(p.processedEmails))
+}
+func (p *DefaultCSVProcessor) Flush() {
+	p.invalidWriter.Flush()
+	p.validWriter.Flush()
 }

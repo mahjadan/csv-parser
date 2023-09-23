@@ -44,40 +44,6 @@ func TestNormalizeMapKeys(t *testing.T) {
 	})
 }
 
-func TestSliceContains(t *testing.T) {
-	testCases := []struct {
-		name           string
-		slice          []string
-		item           string
-		expectedResult bool
-	}{
-		{
-			name:           "ItemExists",
-			slice:          []string{"name", "first_name", "full_name"},
-			item:           "full_name",
-			expectedResult: true,
-		},
-		{
-			name:           "ItemDoesNotExist",
-			slice:          []string{"name", "first_name", "full_name"},
-			item:           "f.name",
-			expectedResult: false,
-		},
-		{
-			name:           "EmptySlice",
-			slice:          []string{},
-			item:           "name",
-			expectedResult: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := SliceContains(tc.slice, tc.item)
-			assert.Equal(t, tc.expectedResult, result)
-		})
-	}
-}
 func TestToLowerTrimSlice(t *testing.T) {
 	testCases := []struct {
 		name           string

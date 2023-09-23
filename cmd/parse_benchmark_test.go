@@ -41,7 +41,7 @@ func BenchmarkParse(b *testing.B) {
 
 		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
 
-		err = parser.Parse(csvFile, validFile, invalidFile, configLoader, columnIdentifier)
+		err = parser.Parse(csvFile, configLoader, columnIdentifier, nil)
 		if err != nil {
 			b.Fatalf("Error running Parse: %v", err)
 		}

@@ -2,7 +2,7 @@ package csvmapper
 
 import (
 	"github.com/pkg/errors"
-	"rcsv/pkg/utils"
+	"slices"
 	"strings"
 )
 
@@ -25,7 +25,7 @@ func (c *DefaultColumnIdentifier) MapColumnToIndexes(csvHeaders []string, column
 
 	for index, header := range csvHeaders {
 		for columnName, alternativeNames := range columnAliases {
-			if header == strings.ToLower(strings.TrimSpace(columnName)) || utils.SliceContains(alternativeNames, header) {
+			if header == strings.ToLower(strings.TrimSpace(columnName)) || slices.Contains(alternativeNames, header) {
 				c.columnIndexMap[columnName] = index
 			}
 		}

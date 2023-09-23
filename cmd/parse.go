@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/csv"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -9,6 +10,7 @@ import (
 	"rcsv/pkg/config"
 	"rcsv/pkg/csvmapper"
 	"rcsv/pkg/parser"
+	"rcsv/pkg/processor"
 	"time"
 )
 
@@ -52,7 +54,10 @@ func runParse(args []string) error {
 
 	columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
 
-	err = parser.Parse(csvFile, validFile, invalidFile, configLoader, columnIdentifier)
+	validWriter := csv.NewWriter(validFile)
+	invalidWriter := csv.NewWriter(invalidFile)
+	csvProcessor := processor.NewCSVProcessor(validWriter, invalidWriter, columnIdentifier)
+	err = parser.Parse(csvFile, configLoader, columnIdentifier, csvProcessor)
 	if err != nil {
 		return err
 	}

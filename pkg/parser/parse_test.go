@@ -1,86 +1,103 @@
-package parser
+package parser_test
 
 import (
-	"bytes"
-	"github.com/spf13/viper"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"rcsv/pkg/config"
-	"rcsv/pkg/csvmapper"
-	"rcsv/pkg/utils"
+	mck "rcsv/pkg/mock"
+	"rcsv/pkg/parser"
 	"strings"
 	"testing"
 )
 
 func TestParse(t *testing.T) {
 	t.Run("ValidInput", func(t *testing.T) {
-		csvData := "id,name,email,salary\n1,John,john@example.com,5000\n"
-		mockValidFile := &bytes.Buffer{}
-		mockInvalidFile := &bytes.Buffer{}
-		configLoader := getConfigLoader(t)
-		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
+		inputData := strings.NewReader("id,name,email,salary\n1,John,john@example.com,5000\n")
+		configLoaderMock := new(mck.Loader)
+		columnIdentifierMock := new(mck.MockColumnIdentifier)
+		csvProcessorMock := new(mck.CSVProcessor)
 
-		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, configLoader, columnIdentifier)
+		csvProcessorMock.On("InitializeHeaders", []string{"id", "name", "email", "salary"}, []string{"id", "name", "email", "salary", "errors"}).Return(nil)
+		csvProcessorMock.On("Flush")
+		csvProcessorMock.On("GetUniqueRecords").Return(int64(0))
+		csvProcessorMock.On("ProcessRecord", []string{"1", "John", "john@example.com", "5000"}, nil).Return(true).Once()
 
+		columnIdentifierMock.On("MapColumnToIndexes", []string{"id", "name", "email", "salary"}, map[string][]string{}).Return(nil)
+
+		configLoaderMock.On("GetValidColumnNames").Return([]string{"id", "name", "email", "salary"})
+		configLoaderMock.On("GetColumnAliasMap").Return(map[string][]string{})
+
+		err := parser.Parse(inputData, configLoaderMock, columnIdentifierMock, csvProcessorMock)
 		assert.NoError(t, err)
-		assert.Equal(t, "id,name,email,salary\n1,John,john@example.com,5000\n", mockValidFile.String())
-		assert.Equal(t, "id,name,email,salary,errors\n", mockInvalidFile.String())
+		configLoaderMock.AssertExpectations(t)
+		columnIdentifierMock.AssertExpectations(t)
+		csvProcessorMock.AssertExpectations(t)
+	})
+	t.Run("error when initializing headers", func(t *testing.T) {
+		inputData := strings.NewReader("id,name,email,salary\n1,John,john@example.com,5000\n")
+		configLoaderMock := new(mck.Loader)
+		columnIdentifierMock := new(mck.MockColumnIdentifier)
+		csvProcessorMock := new(mck.CSVProcessor)
+
+		csvProcessorMock.On("InitializeHeaders", []string{"id", "name", "email", "salary"}, []string{"id", "name", "email", "salary", "errors"}).Return(errors.New("error while writing to file"))
+		csvProcessorMock.On("Flush")
+		csvProcessorMock.On("GetUniqueRecords").Return(int64(0))
+		csvProcessorMock.On("ProcessRecord", []string{"1", "John", "john@example.com", "5000"}, nil).Return(true).Once()
+
+		columnIdentifierMock.On("MapColumnToIndexes", []string{"id", "name", "email", "salary"}, map[string][]string{}).Return(nil)
+
+		configLoaderMock.On("GetValidColumnNames").Return([]string{"id", "name", "email", "salary"})
+		configLoaderMock.On("GetColumnAliasMap").Return(map[string][]string{})
+
+		err := parser.Parse(inputData, configLoaderMock, columnIdentifierMock, csvProcessorMock)
+		assert.Error(t, err)
+		configLoaderMock.AssertExpectations(t)
+		columnIdentifierMock.AssertExpectations(t)
+		csvProcessorMock.AssertNotCalled(t, "ProcessRecord", []string{"1", "John", "john@example.com", "5000"}, nil)
 	})
 	t.Run("ValidInputWithDuplicatedRecords", func(t *testing.T) {
-		csvData := "id,name,email,salary\n1,John,john@example.com,5000\n2,Mah,mah@test.com,6000\n1,John,john@example.com,5000\n"
-		mockValidFile := &bytes.Buffer{}
-		mockInvalidFile := &bytes.Buffer{}
-		configLoader := getConfigLoader(t)
+		data := "id,name,email,salary\n1,John,john@example.com,5000\n2,Mah,mah@test.com,6000\n1,John,john@example.com,5000\n"
+		inputData := strings.NewReader(data)
+		configLoaderMock := new(mck.Loader)
+		columnIdentifierMock := new(mck.MockColumnIdentifier)
+		csvProcessorMock := new(mck.CSVProcessor)
 
-		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
-		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, configLoader, columnIdentifier)
+		csvProcessorMock.On("InitializeHeaders", []string{"id", "name", "email", "salary"}, []string{"id", "name", "email", "salary", "errors"}).Return(nil)
+		csvProcessorMock.On("Flush")
+		csvProcessorMock.On("GetUniqueRecords").Return(int64(0))
+		csvProcessorMock.On("ProcessRecord", []string{"1", "John", "john@example.com", "5000"}, nil).Return(true).Twice()
+		csvProcessorMock.On("ProcessRecord", []string{"2", "Mah", "mah@test.com", "6000"}, nil).Return(true).Once()
 
+		columnIdentifierMock.On("MapColumnToIndexes", []string{"id", "name", "email", "salary"}, map[string][]string{}).Return(nil)
+
+		configLoaderMock.On("GetValidColumnNames").Return([]string{"id", "name", "email", "salary"})
+		configLoaderMock.On("GetColumnAliasMap").Return(map[string][]string{})
+
+		err := parser.Parse(inputData, configLoaderMock, columnIdentifierMock, csvProcessorMock)
 		assert.NoError(t, err)
-		assert.Equal(t, "id,name,email,salary\n1,John,john@example.com,5000\n2,Mah,mah@test.com,6000\n", mockValidFile.String())
-		assert.Equal(t, "id,name,email,salary,errors\n", mockInvalidFile.String())
+		configLoaderMock.AssertExpectations(t)
+		columnIdentifierMock.AssertExpectations(t)
+		csvProcessorMock.AssertExpectations(t)
 	})
-	t.Run("ErrorMissingHeaders", func(t *testing.T) {
-		csvData := "id,name,email\n1,John,john@example.com\n"
-		mockValidFile := &bytes.Buffer{}
-		mockInvalidFile := &bytes.Buffer{}
-		configLoader := getConfigLoader(t)
+	t.Run("error mapping column to index", func(t *testing.T) {
+		inputData := strings.NewReader("id,name,salary\n1,John,john@example.com,5000\n")
+		configLoaderMock := new(mck.Loader)
+		columnIdentifierMock := new(mck.MockColumnIdentifier)
+		csvProcessorMock := new(mck.CSVProcessor)
 
-		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
+		csvProcessorMock.On("InitializeHeaders", []string{"id", "name", "salary"}, []string{"id", "name", "email", "salary", "errors"}).Return(nil)
+		csvProcessorMock.On("Flush")
+		csvProcessorMock.On("GetUniqueRecords").Return(int64(0))
+		csvProcessorMock.On("ProcessRecord", []string{"1", "John", "john@example.com", "5000"}, nil).Return(true).Once()
 
-		err := Parse(strings.NewReader(csvData), mockValidFile, mockInvalidFile, configLoader, columnIdentifier)
+		columnIdentifierMock.On("MapColumnToIndexes", []string{"id", "name", "salary"}, map[string][]string{}).Return(errors.New("missing column/header: email"))
 
-		assert.NotNil(t, err)
-		assert.Contains(t, err.Error(), "missing column/header: 'salary'")
-		assert.Empty(t, mockValidFile.String())
-		assert.Empty(t, mockInvalidFile.String())
+		configLoaderMock.On("GetValidColumnNames").Return([]string{"id", "name", "email", "salary"})
+		configLoaderMock.On("GetColumnAliasMap").Return(map[string][]string{})
+
+		err := parser.Parse(inputData, configLoaderMock, columnIdentifierMock, csvProcessorMock)
+		assert.Error(t, err)
+		columnIdentifierMock.AssertExpectations(t)
+		configLoaderMock.AssertNotCalled(t, "GetValidColumnNames")
+		csvProcessorMock.AssertNotCalled(t, "ProcessRecord", []string{"1", "John", "john@example.com", "5000"}, nil)
 	})
-}
-
-func getConfigLoader(t *testing.T) *config.Loader {
-	t.Helper()
-	configData := `{
-		"column_aliases":{
-		  "name": ["Name", "First", "Last", "Full_name", "f.name"],
-		  "salary": ["wage", "salary", "pay", "Rate"],
-		  "email": ["Email", "E-mail", "e_mail"],
-		  "id": ["ID", "emp id","Number"]
-		},
-		  "output": {
-			"valid_columns": ["id", "name", "email", "salary"]
-		  }
-    }`
-	configFile := strings.NewReader(configData)
-	v := viper.New()
-	v.SetConfigType("json")
-	if err := v.ReadConfig(configFile); err != nil {
-		t.Fatalf("fail to read config file: %v", err)
-	}
-	c := config.Config{}
-	if err := v.Unmarshal(&c); err != nil {
-		t.Fatalf("fail to unmarshal config: %v", err)
-	}
-	utils.NormalizeMapKeys(c.ColumnAliases)
-	return &config.Loader{
-		ValidColumnNames:  c.Output.ValidColumns,
-		ColumnAliasConfig: c.ColumnAliases,
-	}
 }

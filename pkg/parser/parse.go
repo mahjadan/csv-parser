@@ -3,20 +3,22 @@ package parser
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"rcsv/pkg/config"
 	"rcsv/pkg/csvmapper"
 	"rcsv/pkg/processor"
 	"rcsv/pkg/utils"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
-func Parse(csvFile io.Reader, validFile, invalidFile io.Writer, configLoader *config.Loader, columnIdentifier csvmapper.ColumnIdentifier) error {
+func Parse(csvFile io.Reader, configLoader config.Mapper, columnIdentifier csvmapper.ColumnIdentifier, csvProcessor processor.CSVProcessor) error {
 	startTime := time.Now()
 	var totalInvalidRecords int64 = 0
 	var totalValidRecords int64 = 0
 
+	//todo: check if this need to be refactored why creating csv reader here?
 	reader := csv.NewReader(csvFile)
 	headers, err := reader.Read()
 	if err != nil {
@@ -24,18 +26,13 @@ func Parse(csvFile io.Reader, validFile, invalidFile io.Writer, configLoader *co
 	}
 	headers = utils.ToLowerTrimSlice(headers)
 
-	err = columnIdentifier.MapColumnToIndexes(headers, configLoader.ColumnAliasConfig)
+	err = columnIdentifier.MapColumnToIndexes(headers, configLoader.GetColumnAliasMap())
 	if err != nil {
 		return err
 	}
 
-	validWriter := csv.NewWriter(validFile)
-	invalidWriter := csv.NewWriter(invalidFile)
-	defer validWriter.Flush()
-	defer invalidWriter.Flush()
-	csvProcessor := processor.NewCSVProcessor(validWriter, invalidWriter, columnIdentifier)
-
-	err = csvProcessor.WriteHeaders(configLoader.ValidColumnNames, append(headers, "errors"))
+	defer csvProcessor.Flush()
+	err = csvProcessor.InitializeHeaders(configLoader.GetValidColumnNames(), append(headers, "errors"))
 	if err != nil {
 		return errors.Wrap(err, "error writing headers")
 	}
@@ -44,21 +41,18 @@ func Parse(csvFile io.Reader, validFile, invalidFile io.Writer, configLoader *co
 		record, err := reader.Read()
 		if err == io.EOF {
 			break
-		} else if err != nil {
-			csvProcessor.WriteInvalidRecord(record, err.Error())
-			totalInvalidRecords++
-			continue
 		}
-		validRecord := csvProcessor.ProcessValidRecord(record)
-		if validRecord {
+		if valid := csvProcessor.ProcessRecord(record, err); valid {
 			totalValidRecords++
 		} else {
 			totalInvalidRecords++
 		}
 	}
+
 	endTime := time.Now()
 	processingTime := endTime.Sub(startTime)
 
+	//todo: find better way instead of printing here
 	fmt.Println("No of Invalid records: ", totalInvalidRecords)
 	fmt.Println("No of Valid records: ", totalValidRecords)
 	fmt.Println("No of Unique records: ", csvProcessor.GetUniqueRecords())
