@@ -2,39 +2,40 @@ package parser
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io"
 	"rcsv/pkg/config"
 	"rcsv/pkg/csvmapper"
 	"rcsv/pkg/processor"
 	"rcsv/pkg/utils"
-	"time"
 
 	"github.com/pkg/errors"
 )
 
-func Parse(csvFile io.Reader, configLoader config.Mapper, columnIdentifier csvmapper.ColumnIdentifier, csvProcessor processor.CSVProcessor) error {
-	startTime := time.Now()
-	var totalInvalidRecords int64 = 0
-	var totalValidRecords int64 = 0
+type ParseStats struct {
+	TotalInvalidRecords int64
+	TotalValidRecords   int64
+	UniqueRecords       int64
+}
 
-	//todo: check if this need to be refactored why creating csv reader here?
+func Parse(csvFile io.Reader, configLoader config.Mapper, columnIdentifier csvmapper.ColumnIdentifier, csvProcessor processor.CSVProcessor) (*ParseStats, error) {
+	var stats ParseStats
+
 	reader := csv.NewReader(csvFile)
 	headers, err := reader.Read()
 	if err != nil {
-		return errors.Wrap(err, "error reading CSV headers")
+		return nil, errors.Wrap(err, "error reading CSV headers")
 	}
 	headers = utils.ToLowerTrimSlice(headers)
 
 	err = columnIdentifier.MapColumnToIndexes(headers, configLoader.GetColumnAliasMap())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer csvProcessor.Flush()
 	err = csvProcessor.InitializeHeaders(configLoader.GetValidColumnNames(), append(headers, "errors"))
 	if err != nil {
-		return errors.Wrap(err, "error writing headers")
+		return nil, errors.Wrap(err, "error writing headers")
 	}
 
 	for {
@@ -43,19 +44,12 @@ func Parse(csvFile io.Reader, configLoader config.Mapper, columnIdentifier csvma
 			break
 		}
 		if valid := csvProcessor.ProcessRecord(record, err); valid {
-			totalValidRecords++
+			stats.TotalValidRecords++
 		} else {
-			totalInvalidRecords++
+			stats.TotalInvalidRecords++
 		}
 	}
 
-	endTime := time.Now()
-	processingTime := endTime.Sub(startTime)
-
-	//todo: find better way instead of printing here
-	fmt.Println("No of Invalid records: ", totalInvalidRecords)
-	fmt.Println("No of Valid records: ", totalValidRecords)
-	fmt.Println("No of Unique records: ", csvProcessor.GetUniqueRecords())
-	fmt.Println("Processing Time: ", processingTime)
-	return nil
+	stats.UniqueRecords = csvProcessor.GetUniqueRecords()
+	return &stats, nil
 }

@@ -57,7 +57,13 @@ func runParse(args []string) error {
 	validWriter := csv.NewWriter(validFile)
 	invalidWriter := csv.NewWriter(invalidFile)
 	csvProcessor := processor.NewCSVProcessor(validWriter, invalidWriter, columnIdentifier)
-	err = parser.Parse(csvFile, configLoader, columnIdentifier, csvProcessor)
+	startTime := time.Now()
+	stats, err := parser.Parse(csvFile, configLoader, columnIdentifier, csvProcessor)
+	fmt.Println("No of Invalid records: ", stats.TotalInvalidRecords)
+	fmt.Println("No of Valid records: ", stats.TotalValidRecords)
+	fmt.Println("No of Unique records: ", stats.UniqueRecords)
+	fmt.Println("Processing Time: ", time.Now().Sub(startTime))
+
 	if err != nil {
 		return err
 	}

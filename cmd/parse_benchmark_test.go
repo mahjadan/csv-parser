@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"encoding/csv"
 	"os"
 	"rcsv/pkg/config"
 	"rcsv/pkg/csvmapper"
 	"rcsv/pkg/parser"
+	"rcsv/pkg/processor"
 	"testing"
 )
 
@@ -21,13 +23,11 @@ func BenchmarkParse(b *testing.B) {
 	if err != nil {
 		b.Fatalf("Error creating temporary valid file: %v", err)
 	}
-	defer validFile.Close()
 
 	invalidFile, err := createTempCSVFile()
 	if err != nil {
 		b.Fatalf("Error creating temporary invalid file: %v", err)
 	}
-	defer invalidFile.Close()
 
 	b.ResetTimer()
 
@@ -41,19 +41,20 @@ func BenchmarkParse(b *testing.B) {
 
 		columnIdentifier := csvmapper.NewDefaultColumnIdentifier()
 
-		err = parser.Parse(csvFile, configLoader, columnIdentifier, nil)
+		csvProcessor := processor.NewCSVProcessor(validFile, invalidFile, columnIdentifier)
+		_, err = parser.Parse(csvFile, configLoader, columnIdentifier, csvProcessor)
 		if err != nil {
 			b.Fatalf("Error running Parse: %v", err)
 		}
 	}
-
 	b.StopTimer()
 }
 
-func createTempCSVFile() (*os.File, error) {
+func createTempCSVFile() (*csv.Writer, error) {
 	file, err := os.CreateTemp("", "benchmark_*.csv")
+	csvFile := csv.NewWriter(file)
 	if err != nil {
 		return nil, err
 	}
-	return file, nil
+	return csvFile, nil
 }
